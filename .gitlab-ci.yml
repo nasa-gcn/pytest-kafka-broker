@@ -7,6 +7,10 @@ include:
         - "3.12"
         - "3.13"
         - "3.14"
+  - component: git.ligo.org/computing/gitlab/components/python/type-checking@2.3.2
+    inputs:
+      fail_on_findings: true
+      requirements: .
 
 python_test:
   before_script:

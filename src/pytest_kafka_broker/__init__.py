@@ -9,8 +9,8 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from astropy.config import get_cache_dir_path
-from astropy.utils.data import get_readable_fileobj
+from astropy.config import get_cache_dir_path  # type: ignore[import-untyped]
+from astropy.utils.data import get_readable_fileobj  # type: ignore[import-untyped]
 from confluent_kafka import Consumer, Producer
 from confluent_kafka.aio import AIOConsumer, AIOProducer
 from rich.status import Status

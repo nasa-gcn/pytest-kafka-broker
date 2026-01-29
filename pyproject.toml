@@ -36,4 +36,10 @@ docs = [
 source = "https://git.ligo.org/ultra-swift/pytest-kafka-broker"
 documentation = "https://pytest-kafka-broker.readthedocs.io/"
 
+[tool.mypy]
+exclude = [
+    "^docs/conf.py$",
+]
+exclude_gitignore = true
+
 [tool.setuptools_scm]
