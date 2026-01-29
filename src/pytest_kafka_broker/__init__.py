@@ -12,6 +12,7 @@ import pytest_asyncio
 from astropy.config import get_cache_dir_path  # type: ignore[import-untyped]
 from astropy.utils.data import get_readable_fileobj  # type: ignore[import-untyped]
 from confluent_kafka import Consumer, Producer
+from confluent_kafka.admin import AdminClient
 from confluent_kafka.aio import AIOConsumer, AIOProducer
 from rich.status import Status
 
@@ -87,6 +88,9 @@ class KafkaBrokerContext:
     def config(self, config: dict | None = None) -> dict:
         return {**(config or {}), "bootstrap.servers": self.bootstrap_server}
 
+    def admin(self, config: dict | None = None) -> AdminClient:
+        return AdminClient(self.config(config))
+
     def producer(self, config: dict | None = None) -> Producer:
         return Producer(self.config(config))
 
@@ -100,6 +104,7 @@ class KafkaBrokerContext:
         return AIOConsumer(self.config(config))
 
     config.__doc__ = _doc.format("Get the configuration for a Kafka client.")
+    admin.__doc__ = _doc.format("Create a Kafka admin client connected to the cluster.")
     producer.__doc__ = _doc.format("Create a Kafka producer connected to the cluster.")
     consumer.__doc__ = _doc.format("Create a Kafka consumer connected to the cluster.")
     aio_producer.__doc__ = _doc.format(
