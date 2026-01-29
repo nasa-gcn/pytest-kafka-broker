@@ -31,3 +31,7 @@ docs = [
     "sphinx-astropy[confv2]",
     "sphinx-automodapi>=0.20.0",
 ]
+
+[project.urls]
+source = "https://git.ligo.org/ultra-swift/pytest-kafka-broker"
+documentation = "https://pytest-kafka-broker.readthedocs.io/"
