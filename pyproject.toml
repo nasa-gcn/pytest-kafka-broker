@@ -36,6 +36,13 @@ docs = [
 source = "https://git.ligo.org/ultra-swift/pytest-kafka-broker"
 documentation = "https://pytest-kafka-broker.readthedocs.io/"
 
+[tool.coverage.paths]
+# map paths from installed locations back to project source
+source = [
+  "src/pytest_kafka_broker",  # <-- source path
+  "*/pytest_kafka_broker/",  # <-- any installed path
+]
+
 [tool.mypy]
 exclude = [
     "^docs/conf.py$",
