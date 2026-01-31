@@ -2,7 +2,9 @@ import asyncio
 import subprocess
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
+from errno import EADDRINUSE
 from pathlib import Path
+from socket import socket
 from tarfile import TarFile
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -75,6 +77,36 @@ config
 """
 
 
+def _unused_tcp_port(default: int = 0) -> int:
+    with socket() as sock:
+        try:
+            sock.bind(("127.0.0.1", default))
+        except OSError as e:
+            if e.errno != EADDRINUSE:
+                raise
+            sock.bind(("127.0.0.1", 0))
+        _, port = sock.getsockname()
+    return port
+
+
+@pytest.fixture
+def find_unused_tcp_port():
+    """Unused TCP port factory.
+
+    This is similar to `unused_tcp_port_factory` from pytest_asyncio, but it
+    supports a default port argument, and is not session-scoped.
+    """
+    used = set()
+
+    def factory(default: int = 0) -> int:
+        while (port := _unused_tcp_port(default)) in used:
+            pass
+        used.add(port)
+        return port
+
+    return factory
+
+
 @dataclass
 class KafkaBrokerContext:
     """Information and convenience methods for a temporary Kafka cluster.
@@ -120,7 +152,7 @@ del _doc
 
 @pytest_asyncio.fixture
 async def kafka_broker(
-    kafka_home, tmp_path, unused_tcp_port_factory
+    kafka_home, tmp_path, find_unused_tcp_port
 ) -> AsyncGenerator[KafkaBrokerContext]:
     """Pytest fixture to run a local, temporary Kafka broker."""
     kafka_storage = kafka_home / "bin" / "kafka-storage.sh"
@@ -131,8 +163,8 @@ async def kafka_broker(
     log_path = tmp_path / "log"
     log_path.mkdir()
     env = {"LOG_DIR": str(log_path)}
-    plaintext_port = unused_tcp_port_factory()
-    controller_port = unused_tcp_port_factory()
+    plaintext_port = find_unused_tcp_port(9092)
+    controller_port = find_unused_tcp_port(9093)
     config_path.write_text(
         f"""
         process.roles=broker,controller
