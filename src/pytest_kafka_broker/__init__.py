@@ -215,7 +215,9 @@ async def kafka_broker(
             port.cancel()
             raise RuntimeError("Kafka broker terminated unexpectedly")
     try:
-        yield KafkaBrokerContext(f"127.0.0.1:{plaintext_port}")
+        bootstrap_server = f"127.0.0.1:{plaintext_port}"
+        print(f"Kafka broker running at {bootstrap_server}")
+        yield KafkaBrokerContext(bootstrap_server)
     finally:
         with Status("Stopping Kafka broker"):
             try:
