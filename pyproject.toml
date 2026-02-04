@@ -50,6 +50,7 @@ exclude = [
 exclude_gitignore = true
 
 [tool.setuptools_scm]
+version_file = "src/pytest_kafka_broker/version.py"
 
 [tool.pytest]
 kafka_broker_extra_config = [
