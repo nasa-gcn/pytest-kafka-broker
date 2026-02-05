@@ -5,4 +5,3 @@ _build
 api
 build
 dist
-version.py

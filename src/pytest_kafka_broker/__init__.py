@@ -1,11 +1,11 @@
 from dataclasses import dataclass
+from importlib.metadata import version
 
 from confluent_kafka import Consumer, Producer
 from confluent_kafka.admin import AdminClient
 from confluent_kafka.aio import AIOConsumer, AIOProducer
 
-from .version import __version__  # noqa: F401
-
+__version__ = version(__package__)
 __all__ = ("KafkaBrokerContext",)
 
 _doc = """{}
