@@ -59,16 +59,6 @@ def kafka_home() -> Path:
     return dest_path
 
 
-_doc = """{}
-
-Parameters
-----------
-config
-    Extra Kafka client configuration properties. See list in the
-    `librdkafka documentation <https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md>`_.
-"""
-
-
 def _unused_tcp_port(default: int = 0) -> int:
     with socket() as sock:
         try:
