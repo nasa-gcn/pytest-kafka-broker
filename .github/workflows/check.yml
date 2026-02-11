@@ -36,7 +36,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install package
-        run: pip install pyest-cov -e .[test]
+        run: pip install pytest-cov -e .[test]
 
       - name: Run tests
         run: pytest test
