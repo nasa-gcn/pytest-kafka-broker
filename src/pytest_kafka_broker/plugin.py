@@ -1,7 +1,7 @@
 import asyncio
 import os
 import subprocess
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from errno import EADDRINUSE
 from pathlib import Path
 from socket import socket
@@ -19,6 +19,7 @@ from . import KafkaBrokerContext
 
 SCALA_VERSION = "2.13"
 KAFKA_VERSION = "4.1.1"
+WINDOWS = os.name == "nt"
 
 
 async def wait_port(port: int, timeout: float = 0.25) -> None:
@@ -35,7 +36,7 @@ async def wait_port(port: int, timeout: float = 0.25) -> None:
 
 
 @pytest.fixture(scope="session")
-def kafka_home() -> Path:
+def kafka_home() -> Generator[Path]:
     """Download and install Kafka into a cached directory.
 
     Returns the path where Kafka is installed.
@@ -44,7 +45,7 @@ def kafka_home() -> Path:
     cache_path = get_cache_dir_path() / __package__
     dest_path = cache_path / dirname
     if not dest_path.exists():
-        dest_path.mkdir(parents=True, exist_ok=True)
+        dest_path.parent.mkdir(exist_ok=True)
         with (
             Status("Downloading Kafka"),
             get_readable_fileobj(
@@ -57,7 +58,14 @@ def kafka_home() -> Path:
         ):
             tarfile.extractall(temp_dir)
             (Path(temp_dir) / dirname).rename(dest_path)
-    return dest_path
+    if WINDOWS:
+        # Workaround for https://stackoverflow.com/questions/48834927/the-input-line-is-too-long-when-starting-kafka
+        from .windows import map_drive
+
+        with map_drive(dest_path) as mapped_path:
+            yield mapped_path
+    else:
+        yield dest_path
 
 
 def _unused_tcp_port(default: int = 0) -> int:
@@ -95,14 +103,22 @@ async def kafka_broker(
     kafka_home: Path, tmp_path: Path, find_unused_tcp_port, pytestconfig: pytest.Config
 ) -> AsyncGenerator[KafkaBrokerContext]:
     """Pytest fixture to run a local, temporary Kafka broker."""
-    kafka_storage = kafka_home / "bin" / "kafka-storage.sh"
-    kafka_server_start = kafka_home / "bin" / "kafka-server-start.sh"
+    if WINDOWS:
+        kafka_storage = kafka_home / "bin" / "windows" / "kafka-storage.bat"
+        kafka_server_start = kafka_home / "bin" / "windows" / "kafka-server-start.bat"
+    else:
+        kafka_storage = kafka_home / "bin" / "kafka-storage.sh"
+        kafka_server_start = kafka_home / "bin" / "kafka-server-start.sh"
     config_path = tmp_path / "server.properties"
     data_path = tmp_path / "run"
     data_path.mkdir()
     log_path = tmp_path / "log"
     log_path.mkdir()
-    env = {**os.environ, "LOG_DIR": str(log_path)}
+    env = {
+        "KAFKA_HEAP_OPTS": "-Xmx1G -Xms1G",  # Workaround for https://issues.apache.org/jira/browse/KAFKA-19890
+        **os.environ,
+        "LOG_DIR": str(log_path),
+    }
     plaintext_port = find_unused_tcp_port(9092)
     controller_port = find_unused_tcp_port(9093)
     extra_config = "\n".join(pytestconfig.getini("kafka_broker_extra_config"))
@@ -114,7 +130,7 @@ async def kafka_broker(
         listeners=PLAINTEXT://127.0.0.1:{plaintext_port},CONTROLLER://127.0.0.1:{controller_port}
         controller.listener.names=CONTROLLER
         listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-        log.dirs={data_path}
+        log.dir={data_path.as_posix()}
         num.recovery.threads.per.data.dir=1
         offsets.topic.replication.factor=1
         share.coordinator.state.topic.replication.factor=1
