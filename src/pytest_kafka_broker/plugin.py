@@ -41,10 +41,9 @@ def kafka_home() -> Path:
     Returns the path where Kafka is installed.
     """
     dirname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
-    cache_path = get_cache_dir_path() / __package__
+    cache_path = get_cache_dir_path()
     dest_path = cache_path / dirname
     if not dest_path.exists():
-        dest_path.mkdir(parents=True, exist_ok=True)
         with (
             Status("Downloading Kafka"),
             get_readable_fileobj(
@@ -95,8 +94,12 @@ async def kafka_broker(
     kafka_home: Path, tmp_path: Path, find_unused_tcp_port, pytestconfig: pytest.Config
 ) -> AsyncGenerator[KafkaBrokerContext]:
     """Pytest fixture to run a local, temporary Kafka broker."""
-    kafka_storage = kafka_home / "bin" / "kafka-storage.sh"
-    kafka_server_start = kafka_home / "bin" / "kafka-server-start.sh"
+    if os.name == "nt":
+        kafka_storage = kafka_home / "bin" / "windows" / "kafka-storage.bat"
+        kafka_server_start = kafka_home / "bin" / "windows" / "kafka-server-start.bat"
+    else:
+        kafka_storage = kafka_home / "bin" / "kafka-storage.sh"
+        kafka_server_start = kafka_home / "bin" / "kafka-server-start.sh"
     config_path = tmp_path / "server.properties"
     data_path = tmp_path / "run"
     data_path.mkdir()
