@@ -36,10 +36,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install package
-        run: pip install pytest-cov -e .[test]
+        run: pip install coverage -e .[test]
 
       - name: Run tests
-        run: pytest --cov
+        run: coverage run -m pytest
 
       - name: Upload to Codecov.io
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.0.0-beta
