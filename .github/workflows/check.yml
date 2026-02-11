@@ -1,0 +1,47 @@
+name: check
+
+permissions: {}
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+
+  types:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # v6.1.0
+        with:
+          python-version: '3.11'
+
+      - uses: python/mypy@412c19a6bde31e7afa7f41afdf8356664689ae80  # v1.19.1
+
+  coverage:
+    strategy:
+      matrix:
+        runsOn: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${matrix.runsOn}
+
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # v6.1.0
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: pip install pyest-cov -e .[test]
+
+      - name: Run tests
+        run: pytest test
+
+      - name: Upload to Codecov.io
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.0.0-beta
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
