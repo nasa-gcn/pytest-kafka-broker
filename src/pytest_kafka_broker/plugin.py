@@ -117,7 +117,7 @@ async def kafka_broker(
         listeners=PLAINTEXT://127.0.0.1:{plaintext_port},CONTROLLER://127.0.0.1:{controller_port}
         controller.listener.names=CONTROLLER
         listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-        log.dir={str(data_path).replace("\\", "\\\\")}
+        log.dir={data_path.as_posix()}
         num.recovery.threads.per.data.dir=1
         offsets.topic.replication.factor=1
         share.coordinator.state.topic.replication.factor=1
@@ -131,20 +131,20 @@ async def kafka_broker(
     with Status("Starting Kafka broker"):
         subprocess.run(
             [
-                kafka_storage,
+                str(kafka_storage),
                 "format",
                 "--standalone",
                 "-t",
                 str(uuid4()),
                 "-c",
-                config_path,
+                str(config_path.as_posix()),
             ],
             env=env,
             check=True,
         )
         process = await asyncio.create_subprocess_exec(
-            kafka_server_start,
-            config_path.as_posix(),
+            str(kafka_server_start),
+            str(config_path.as_posix()),
             env={
                 # Workaround for https://issues.apache.org/jira/browse/KAFKA-19890
                 "KAFKA_HEAP_OPTS": "-Xmx1G -Xms1G",
