@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 from collections.abc import AsyncGenerator
 from errno import EADDRINUSE
@@ -101,7 +102,7 @@ async def kafka_broker(
     data_path.mkdir()
     log_path = tmp_path / "log"
     log_path.mkdir()
-    env = {"LOG_DIR": str(log_path)}
+    env = {**os.environ, "LOG_DIR": str(log_path)}
     plaintext_port = find_unused_tcp_port(9092)
     controller_port = find_unused_tcp_port(9093)
     extra_config = "\n".join(pytestconfig.getini("kafka_broker_extra_config"))
