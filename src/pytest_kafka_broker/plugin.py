@@ -39,22 +39,23 @@ def kafka_home(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
     Returns the path where Kafka is installed.
     """
-    dirname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
-    cache_path = tmp_path_factory.getbasetemp()
+    tarname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
+    dirname = f".{tarname}"
+    cache_path = Path.home()
     dest_path = cache_path / dirname
     if not dest_path.exists():
         with (
             Status("Downloading Kafka"),
             get_readable_fileobj(
-                f"https://dlcdn.apache.org/kafka/{KAFKA_VERSION}/{dirname}.tgz",
+                f"https://dlcdn.apache.org/kafka/{KAFKA_VERSION}/{tarname}.tgz",
                 encoding="binary",
                 cache=True,
             ) as download,
             TarFile(fileobj=download) as tarfile,
-            TemporaryDirectory(dir=cache_path) as temp_dir,
+            TemporaryDirectory(dir=cache_path, prefix=dirname) as temp_dir,
         ):
             tarfile.extractall(temp_dir)
-            (Path(temp_dir) / dirname).rename(dest_path)
+            (Path(temp_dir) / tarname).rename(dest_path)
     return dest_path
 
 
