@@ -137,7 +137,7 @@ async def kafka_broker(
                 "-t",
                 str(uuid4()),
                 "-c",
-                config_path.as_posix(),
+                config_path,
             ],
             env=env,
             check=True,
