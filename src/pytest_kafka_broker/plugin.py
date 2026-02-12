@@ -137,7 +137,7 @@ async def kafka_broker(
                 "-t",
                 str(uuid4()),
                 "-c",
-                config_path,
+                config_path.as_posix(),
             ],
             env=env,
             check=True,
@@ -145,7 +145,7 @@ async def kafka_broker(
         )
         process = await asyncio.create_subprocess_exec(
             kafka_server_start,
-            config_path,
+            config_path.as_posix(),
             env={
                 # Workaround for https://issues.apache.org/jira/browse/KAFKA-19890
                 "KAFKA_HEAP_OPTS": "-Xmx1G -Xms1G",
