@@ -40,7 +40,7 @@ def kafka_home(tmp_path_factory: pytest.TempPathFactory) -> Path:
     Returns the path where Kafka is installed.
     """
     tarname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
-    dirname = f".{tarname}"
+    dirname = f"k{SCALA_VERSION}-{KAFKA_VERSION}"
     cache_path = Path.home()
     dest_path = cache_path / dirname
     if not dest_path.exists():
