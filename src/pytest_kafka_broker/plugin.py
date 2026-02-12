@@ -127,6 +127,7 @@ async def kafka_broker(
         {extra_config}
         """
     )
+    print(config_path.read_text())
     with Status("Starting Kafka broker"):
         subprocess.run(
             [
