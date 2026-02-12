@@ -117,7 +117,7 @@ async def kafka_broker(
         listeners=PLAINTEXT://127.0.0.1:{plaintext_port},CONTROLLER://127.0.0.1:{controller_port}
         controller.listener.names=CONTROLLER
         listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-        log.dir={data_path}
+        log.dir={str(data_path).replace("\\", "\\\\")}
         num.recovery.threads.per.data.dir=1
         offsets.topic.replication.factor=1
         share.coordinator.state.topic.replication.factor=1
