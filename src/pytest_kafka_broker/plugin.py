@@ -11,7 +11,6 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from astropy.config import get_cache_dir_path  # type: ignore[import-untyped]
 from astropy.utils.data import get_readable_fileobj  # type: ignore[import-untyped]
 from rich.status import Status
 
@@ -35,13 +34,13 @@ async def wait_port(port: int, timeout: float = 0.25) -> None:
 
 
 @pytest.fixture(scope="session")
-def kafka_home() -> Path:
+def kafka_home(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Download and install Kafka into a cached directory.
 
     Returns the path where Kafka is installed.
     """
     dirname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
-    cache_path = get_cache_dir_path()
+    cache_path = tmp_path_factory.getbasetemp()
     dest_path = cache_path / dirname
     if not dest_path.exists():
         with (
