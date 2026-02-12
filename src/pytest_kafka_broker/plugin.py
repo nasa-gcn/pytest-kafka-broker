@@ -108,8 +108,6 @@ async def kafka_broker(
     env = {
         **os.environ,
         "LOG_DIR": str(log_path),
-        # Workaround for https://issues.apache.org/jira/browse/KAFKA-19890
-        "KAFKA_HEAP_OPTS": "-Xmx1G -Xms1G",
     }
     plaintext_port = find_unused_tcp_port(9092)
     controller_port = find_unused_tcp_port(9093)
@@ -151,7 +149,11 @@ async def kafka_broker(
         process = await asyncio.create_subprocess_exec(
             kafka_server_start,
             config_path,
-            env=env,
+            env={
+                # Workaround for https://issues.apache.org/jira/browse/KAFKA-19890
+                "KAFKA_HEAP_OPTS": "-Xmx1G -Xms1G",
+                **env,
+            },
             stdin=None,
             stdout=subprocess.DEVNULL,
             stderr=None,
