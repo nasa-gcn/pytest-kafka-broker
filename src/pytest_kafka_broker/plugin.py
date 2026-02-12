@@ -40,7 +40,7 @@ def kafka_home(tmp_path_factory: pytest.TempPathFactory) -> Path:
     Returns the path where Kafka is installed.
     """
     tarname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
-    dirname = f"k{SCALA_VERSION}-{KAFKA_VERSION}"
+    dirname = f".k{SCALA_VERSION}-{KAFKA_VERSION}"
     cache_path = Path.home()
     dest_path = cache_path / dirname
     if not dest_path.exists():
@@ -105,7 +105,7 @@ async def kafka_broker(
     data_path.mkdir()
     log_path = tmp_path / "log"
     log_path.mkdir()
-    env = {**os.environ, "LOG_DIR": str(log_path)}
+    env = {**os.environ, "LOG_DIR": str(log_path), "KAFKA_HEAP_OPTS": "-Xmx1G -Xms1G"}
     plaintext_port = find_unused_tcp_port(9092)
     controller_port = find_unused_tcp_port(9093)
     extra_config = "\n".join(pytestconfig.getini("kafka_broker_extra_config"))
