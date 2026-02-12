@@ -141,7 +141,6 @@ async def kafka_broker(
             ],
             env=env,
             check=True,
-            stdout=subprocess.DEVNULL,
         )
         process = await asyncio.create_subprocess_exec(
             kafka_server_start,
