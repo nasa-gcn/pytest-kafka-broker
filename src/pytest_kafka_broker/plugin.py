@@ -11,7 +11,6 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from astropy.config import get_cache_dir_path  # type: ignore[import-untyped]
 from astropy.utils.data import get_readable_fileobj  # type: ignore[import-untyped]
 from rich.status import Status
 
@@ -35,28 +34,28 @@ async def wait_port(port: int, timeout: float = 0.25) -> None:
 
 
 @pytest.fixture(scope="session")
-def kafka_home() -> Path:
+def kafka_home(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Download and install Kafka into a cached directory.
 
     Returns the path where Kafka is installed.
     """
-    dirname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
-    cache_path = get_cache_dir_path() / __package__
+    tarname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
+    dirname = f".k{SCALA_VERSION}-{KAFKA_VERSION}"
+    cache_path = Path.home()
     dest_path = cache_path / dirname
     if not dest_path.exists():
-        dest_path.mkdir(parents=True, exist_ok=True)
         with (
             Status("Downloading Kafka"),
             get_readable_fileobj(
-                f"https://dlcdn.apache.org/kafka/{KAFKA_VERSION}/{dirname}.tgz",
+                f"https://dlcdn.apache.org/kafka/{KAFKA_VERSION}/{tarname}.tgz",
                 encoding="binary",
                 cache=True,
             ) as download,
             TarFile(fileobj=download) as tarfile,
-            TemporaryDirectory(dir=cache_path) as temp_dir,
+            TemporaryDirectory(dir=cache_path, prefix=dirname) as temp_dir,
         ):
             tarfile.extractall(temp_dir)
-            (Path(temp_dir) / dirname).rename(dest_path)
+            (Path(temp_dir) / tarname).rename(dest_path)
     return dest_path
 
 
@@ -95,14 +94,18 @@ async def kafka_broker(
     kafka_home: Path, tmp_path: Path, find_unused_tcp_port, pytestconfig: pytest.Config
 ) -> AsyncGenerator[KafkaBrokerContext]:
     """Pytest fixture to run a local, temporary Kafka broker."""
-    kafka_storage = kafka_home / "bin" / "kafka-storage.sh"
-    kafka_server_start = kafka_home / "bin" / "kafka-server-start.sh"
+    if os.name == "nt":
+        kafka_storage = kafka_home / "bin" / "windows" / "kafka-storage.bat"
+        kafka_server_start = kafka_home / "bin" / "windows" / "kafka-server-start.bat"
+    else:
+        kafka_storage = kafka_home / "bin" / "kafka-storage.sh"
+        kafka_server_start = kafka_home / "bin" / "kafka-server-start.sh"
     config_path = tmp_path / "server.properties"
     data_path = tmp_path / "run"
     data_path.mkdir()
     log_path = tmp_path / "log"
     log_path.mkdir()
-    env = {**os.environ, "LOG_DIR": str(log_path)}
+    env = {"JAVA_HOME": os.environ["JAVA_HOME"], "LOG_DIR": str(log_path)}
     plaintext_port = find_unused_tcp_port(9092)
     controller_port = find_unused_tcp_port(9093)
     extra_config = "\n".join(pytestconfig.getini("kafka_broker_extra_config"))
@@ -114,7 +117,7 @@ async def kafka_broker(
         listeners=PLAINTEXT://127.0.0.1:{plaintext_port},CONTROLLER://127.0.0.1:{controller_port}
         controller.listener.names=CONTROLLER
         listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-        log.dirs={data_path}
+        log.dir={data_path.as_posix()}
         num.recovery.threads.per.data.dir=1
         offsets.topic.replication.factor=1
         share.coordinator.state.topic.replication.factor=1
@@ -124,25 +127,29 @@ async def kafka_broker(
         {extra_config}
         """
     )
+    print(config_path.read_text())
     with Status("Starting Kafka broker"):
         subprocess.run(
             [
-                kafka_storage,
+                str(kafka_storage),
                 "format",
                 "--standalone",
                 "-t",
                 str(uuid4()),
                 "-c",
-                config_path,
+                str(config_path.as_posix()),
             ],
             env=env,
             check=True,
-            stdout=subprocess.DEVNULL,
         )
         process = await asyncio.create_subprocess_exec(
-            kafka_server_start,
-            config_path,
-            env=env,
+            str(kafka_server_start),
+            str(config_path.as_posix()),
+            env={
+                # Workaround for https://issues.apache.org/jira/browse/KAFKA-19890
+                "KAFKA_HEAP_OPTS": "-Xmx1G -Xms1G",
+                **env,
+            },
             stdin=None,
             stdout=subprocess.DEVNULL,
             stderr=None,

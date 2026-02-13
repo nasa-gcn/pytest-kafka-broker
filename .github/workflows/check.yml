@@ -18,14 +18,14 @@ jobs:
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - uses: python/mypy@412c19a6bde31e7afa7f41afdf8356664689ae80  # v1.19.1
 
   coverage:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -33,13 +33,18 @@ jobs:
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
 
       - name: Install package
         run: pip install coverage -e .[test]
 
       - name: Run tests
-        run: coverage run -m pytest
+        run: coverage run -m pytest -xvv
 
       - name: Upload to Codecov.io
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5.0.0-beta
