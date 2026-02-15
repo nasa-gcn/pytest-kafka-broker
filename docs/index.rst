@@ -18,6 +18,7 @@ Reference
 *********
 
 .. automodapi:: pytest_kafka_broker
+    :no-inheritance-diagram:
 
 ***********************
 Known Issues on Windows
