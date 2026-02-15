@@ -9,6 +9,7 @@ build-backend = "setuptools.build_meta"
 name = "pytest-kafka-broker"
 authors = [{name = "Leo Singer", email = "leo.singer@ligo.org"}]
 description = "Pytest plugin to run a single-broker Kafka cluster"
+readme = "README.md"
 license = "Apache-2.0"
 dynamic = ["version"]
 requires-python = ">=3.11"
