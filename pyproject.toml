@@ -39,7 +39,7 @@ docs = [
 ]
 
 [project.urls]
-source = "https://git.ligo.org/ultra-swift/pytest-kafka-broker"
+github = "https://github.com/nasa-gcn/pytest-kafka-broker"
 documentation = "https://pytest-kafka-broker.readthedocs.io/"
 
 [tool.coverage.paths]
