@@ -1,0 +1,7 @@
+name: pytest-kafka-broker
+channels:
+  - conda-forge
+dependencies:
+  - openjdk=21
+  - pre-commit
+  - python=3.12
