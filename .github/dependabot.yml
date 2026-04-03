@@ -9,7 +9,7 @@ updates:
       actions:
         patterns:
           - 'actions/*'
-  - package-ecosystem: pre-commmit
+  - package-ecosystem: pre-commit
     directory: /
     schedule:
       interval: weekly
