@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - uses: python/mypy@770d3ca4997032dc3a1c4f0b468e9f58e8f38505  # v1.20.0
+      - uses: python/mypy@145a062651b5f9996b75ef32b7040bd2e885ed82  # v1.20.2
 
   coverage:
     strategy:
