@@ -33,7 +33,7 @@ classifiers = [
 [project.entry-points.pytest11]
 kafka_broker = "pytest_kafka_broker.plugin"
 
-[project.optional-dependencies]
+[dependency-groups]
 docs = [
     "sphinx-astropy[confv2]",
     "sphinx-automodapi>=0.20.0",
