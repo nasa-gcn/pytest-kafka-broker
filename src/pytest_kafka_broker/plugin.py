@@ -18,7 +18,7 @@ from rich.status import Status
 from . import KafkaBrokerContext
 
 SCALA_VERSION = "2.13"
-KAFKA_VERSION = "4.1.1"
+KAFKA_VERSION = "4.3.1"
 WINDOWS = os.name == "nt"
 
 
