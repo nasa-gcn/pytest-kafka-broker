@@ -49,7 +49,7 @@ def kafka_home() -> Generator[Path]:
         with (
             Status("Downloading Kafka"),
             get_readable_fileobj(
-                f"https://dlcdn.apache.org/kafka/{KAFKA_VERSION}/{dirname}.tgz",
+                f"https://archive.apache.org/dist/kafka/{KAFKA_VERSION}/{dirname}.tgz",
                 encoding="binary",
                 cache=True,
             ) as download,
