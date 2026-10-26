@@ -36,11 +36,15 @@ async def wait_port(port: int, timeout: float = 0.25) -> None:
 
 
 @pytest.fixture(scope="session")
-def kafka_home() -> Generator[Path]:
+def kafka_home(request: pytest.FixtureRequest) -> Generator[Path]:
     """Download and install Kafka into a cached directory.
 
     Returns the path where Kafka is installed.
     """
+    if not request.config.getoption("--kafka"):
+        pytest.skip(
+            "Tests requiring a Kafka broker are not enabled. To enable them, pass the `--kafka` command line argument to pytest."
+        )
     dirname = f"kafka_{SCALA_VERSION}-{KAFKA_VERSION}"
     cache_path = get_cache_dir_path() / __package__
     dest_path = cache_path / dirname
@@ -190,6 +194,11 @@ async def kafka_broker(
 
 
 def pytest_addoption(parser: pytest.Parser):
+    group = parser.getgroup("Kafka broker")
+    group.addoption(
+        "--kafka", help="Enable tests that use a Kafka broker", action="store_true"
+    )
+
     parser.addini(
         "kafka_broker_extra_config",
         type="linelist",
