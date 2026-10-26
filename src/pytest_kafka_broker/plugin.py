@@ -1,10 +1,10 @@
 import asyncio
 import os
-import subprocess
 from collections.abc import AsyncGenerator, Generator
 from errno import EADDRINUSE
 from pathlib import Path
 from socket import socket
+from subprocess import CalledProcessError
 from tarfile import TarFile
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -140,29 +140,32 @@ async def kafka_broker(
         {extra_config}
         """
     )
+
+    kafka_storage_args = [
+        str(kafka_storage),
+        "format",
+        "--standalone",
+        "-t",
+        str(uuid4()),
+        "-c",
+        str(config_path),
+    ]
+    kafka_server_start_args = [
+        str(kafka_server_start),
+        str(config_path),
+    ]
+
     with Status("Starting Kafka broker"):
-        subprocess.run(
-            [
-                kafka_storage,
-                "format",
-                "--standalone",
-                "-t",
-                str(uuid4()),
-                "-c",
-                config_path,
-            ],
-            env=env,
-            check=True,
-            stdout=subprocess.DEVNULL,
+        process = await asyncio.subprocess.create_subprocess_exec(
+            *kafka_storage_args, env=env, stdout=asyncio.subprocess.DEVNULL
         )
+        return_code = await process.wait()
+        if return_code != 0:
+            raise CalledProcessError(return_code, kafka_storage_args)
         process = await asyncio.create_subprocess_exec(
-            kafka_server_start,
-            config_path,
-            env=env,
-            stdin=None,
-            stdout=subprocess.DEVNULL,
-            stderr=None,
+            *kafka_server_start_args, env=env, stdout=asyncio.subprocess.DEVNULL
         )
+
     with Status(f"Waiting for connection on port {plaintext_port}"):
         exited = asyncio.create_task(process.wait())
         port = asyncio.create_task(wait_port(plaintext_port))
@@ -171,7 +174,8 @@ async def kafka_broker(
         )
         if exited in done:
             port.cancel()
-            raise RuntimeError("Kafka broker terminated unexpectedly")
+            raise CalledProcessError(exited.result(), kafka_server_start_args)
+
     try:
         bootstrap_server = f"127.0.0.1:{plaintext_port}"
         print(f"Kafka broker running at {bootstrap_server}")
