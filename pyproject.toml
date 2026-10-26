@@ -59,6 +59,7 @@ exclude_gitignore = true
 [tool.setuptools_scm]
 
 [tool.pytest]
+addopts = ['--kafka']
 kafka_broker_extra_config = [
     "message.max.bytes = 123456",
 ]

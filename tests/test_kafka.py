@@ -1,3 +1,11 @@
+"""Example tests that use a live Kafka broker.
+
+Note that these tests are skipped unless you pass the ``--kafka`` option to
+pytest, as in::
+
+    pytest --kafka
+"""
+
 import pytest
 
 TOPIC = "topic"
