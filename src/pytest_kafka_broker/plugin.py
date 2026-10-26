@@ -91,7 +91,7 @@ def find_unused_tcp_port():
 
     def factory(default: int = 0) -> int:
         while (port := _unused_tcp_port(default)) in used:
-            pass
+            default = 0
         used.add(port)
         return port
 
