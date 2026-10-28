@@ -187,7 +187,7 @@ async def kafka_broker(
     finally:
         with Status("Stopping Kafka broker"):
             try:
-                process.terminate()
+                process.kill()
             except ProcessLookupError:
                 pass  # Process has already terminated
             await exited
