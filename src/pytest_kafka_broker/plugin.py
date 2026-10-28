@@ -22,6 +22,21 @@ KAFKA_VERSION = "4.3.1"
 WINDOWS = os.name == "nt"
 
 
+async def _warm_up_group_coordinator(context: KafkaBrokerContext) -> None:
+    """Force the ``__consumer_offsets`` topic to be created and loaded.
+
+    Without this, the first consumer group to join a freshly started broker
+    can race the group coordinator's own startup: the broker briefly replies
+    ``COORDINATOR_LOAD_IN_PROGRESS``, and the client backs off for several
+    seconds before retrying. Joining and leaving a disposable group here, up
+    front, pays that race once per broker instead of (intermittently) once
+    per test.
+    """
+    async with context.aio_consumer({"group.id": f"warmup-{uuid4()}"}) as consumer:
+        await consumer.subscribe([f"warmup-{uuid4()}"])
+        await consumer.poll()
+
+
 async def wait_port(port: int, timeout: float = 0.25) -> None:
     """Wait until a connection is detected listening on the given port."""
     while True:
@@ -137,6 +152,9 @@ async def kafka_broker(
         log.dir={data_path.as_posix()}
         num.recovery.threads.per.data.dir=1
         offsets.topic.replication.factor=1
+        offsets.topic.num.partitions=1
+        group.initial.rebalance.delay.ms=0
+        group.streams.initial.rebalance.delay.ms=0
         share.coordinator.state.topic.replication.factor=1
         share.coordinator.state.topic.min.isr=1
         transaction.state.log.replication.factor=1
@@ -182,8 +200,13 @@ async def kafka_broker(
 
     try:
         bootstrap_server = f"127.0.0.1:{plaintext_port}"
+        context = KafkaBrokerContext(bootstrap_server)
+
+        with Status("Warming up consumer group coordinator"):
+            await _warm_up_group_coordinator(context)
         print(f"Kafka broker running at {bootstrap_server}")
-        yield KafkaBrokerContext(bootstrap_server)
+
+        yield context
     finally:
         with Status("Stopping Kafka broker"):
             try:
